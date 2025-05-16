@@ -1,9 +1,6 @@
 'use client';
 
 import type React from 'react';
-
-import { useState } from 'react';
-import Link from 'next/link';
 import {
   BarChart3,
   Package,
@@ -13,39 +10,45 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
+  Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import NavItem from './nav-item';
 
-export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
-
-  return (
-    <div
-      className={cn(
-        'group relative flex h-screen flex-col border-r bg-background p-2 transition-all',
-        collapsed ? 'w-16' : 'w-64'
-      )}
-    >
+export function Sidebar({
+  collapsed,
+  setCollapsed,
+  isMobile,
+}: {
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
+  isMobile: boolean;
+}) {
+  const SidebarContent = () => (
+    <>
       <div className="flex items-center justify-between p-2">
         {!collapsed && <span className="text-xl font-semibold">Admin</span>}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="ml-auto h-8 w-8"
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto h-8 w-8"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
+        )}
       </div>
       <nav className="flex-1 space-y-2 py-4">
         <NavItem
-          href="/"
+          href="#"
           icon={LayoutDashboard}
           label="Dashboard"
           collapsed={collapsed}
@@ -58,19 +61,19 @@ export function Sidebar() {
           active
         />
         <NavItem
-          href="/orders"
+          href="#"
           icon={ShoppingCart}
           label="Orders"
           collapsed={collapsed}
         />
         <NavItem
-          href="/customers"
+          href="#"
           icon={Users}
           label="Customers"
           collapsed={collapsed}
         />
         <NavItem
-          href="/analytics"
+          href="#"
           icon={BarChart3}
           label="Analytics"
           collapsed={collapsed}
@@ -84,30 +87,39 @@ export function Sidebar() {
           />
         </div>
       </nav>
-    </div>
+    </>
   );
-}
 
-interface NavItemProps {
-  href: string;
-  icon: React.ElementType;
-  label: string;
-  collapsed: boolean;
-  active?: boolean;
-}
+  if (isMobile) {
+    return (
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="fixed left-4 top-4 z-40 md:hidden"
+          >
+            <Menu className="h-6 w-6" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64 p-0">
+          <div className="flex h-full flex-col">
+            <SidebarContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
-function NavItem({ href, icon: Icon, label, collapsed, active }: NavItemProps) {
   return (
-    <Link
-      href={href}
+    <aside
       className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:text-accent-foreground',
-        active ? 'bg-accent text-accent-foreground' : 'text-muted-foreground',
-        collapsed ? 'justify-center' : ''
+        'hidden md:flex h-[calc(100vh-4rem)] flex-col border-r bg-background p-2 transition-all',
+        collapsed ? 'w-16' : 'w-64'
       )}
     >
-      <Icon className="h-5 w-5" />
-      {!collapsed && <span>{label}</span>}
-    </Link>
+      <SidebarContent />
+    </aside>
   );
 }
