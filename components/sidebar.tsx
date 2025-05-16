@@ -54,7 +54,7 @@ export function Sidebar({
           collapsed={collapsed}
         />
         <NavItem
-          href="/products"
+          href="#"
           icon={Package}
           label="Products"
           collapsed={collapsed}
