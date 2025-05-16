@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { Product, ProductCategory } from '@/types/product';
-import { mockProducts } from '@/lib/mock-data';
 import { productService } from '@/lib/service/product-service';
 
 interface ProductState {
