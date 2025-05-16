@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { delay, getProducts } from '@/lib/helpers';
+import { delay, getProducts, saveProducts } from '@/lib/helpers';
 
 export async function GET() {
   await delay(Math.floor(Math.random() * 500) + 300);
@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json(products);
   } catch (error) {
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: `Internal server error, ${error}` },
       { status: 500 }
     );
   }
@@ -17,7 +17,7 @@ export async function GET() {
 export async function POST(request: Request) {
   await delay(Math.floor(Math.random() * 100) + 300);
   try {
-    const { name, description, price, category } = await request.json();
+    const { name, description, price, category, stock } = await request.json();
     if (!name || !description || !price || !category) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -31,10 +31,12 @@ export async function POST(request: Request) {
       description,
       price,
       category,
+      stock,
     };
     const products = await getProducts();
     const updatedProducts = [...products, newProduct];
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
+    await saveProducts(updatedProducts);
+    console.log('updatedProducts', updatedProducts);
     return NextResponse.json(
       { message: 'Product created successfully', product: newProduct },
       { status: 201 }

@@ -24,6 +24,9 @@ import {
 } from '@/components/ui/select';
 import type { ProductCategory } from '@/types/product';
 import { formValidationSchema } from '@/lib/validation';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CreateProductModalProps {
   isOpen: boolean;
@@ -35,6 +38,7 @@ export function CreateProductModal({
   onClose,
 }: CreateProductModalProps) {
   const { addProduct, categories } = useProductStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -45,17 +49,26 @@ export function CreateProductModal({
       stock: '',
     },
     validationSchema: formValidationSchema,
-    onSubmit: (values) => {
-      addProduct({
-        id: Math.random().toString(36).substring(2, 9),
-        name: values.name,
-        description: values.description,
-        price: Number(values.price),
-        category: values.category as ProductCategory,
-        stock: Number(values.stock),
-      });
-      formik.resetForm();
-      onClose();
+    onSubmit: async (values) => {
+      setIsSubmitting(true);
+      try {
+        await addProduct({
+          id: Math.random().toString(36).substring(2, 9),
+          name: values.name,
+          description: values.description,
+          price: Number(values.price),
+          category: values.category as ProductCategory,
+          stock: Number(values.stock),
+        });
+        formik.resetForm();
+        onClose();
+        toast.success('Product created successfully');
+      } catch (error) {
+        console.error('Failed to create product:', error);
+        toast.error('Failed to create product');
+      } finally {
+        setIsSubmitting(false);
+      }
     },
   });
 
@@ -159,8 +172,15 @@ export function CreateProductModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={formik.isSubmitting}>
-              Create Product
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Product'
+              )}
             </Button>
           </DialogFooter>
         </form>

@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formValidationSchema } from '@/lib/validation';
+import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -36,6 +38,7 @@ export function EditProductModal({
   product,
 }: EditProductModalProps) {
   const { updateProduct, categories } = useProductStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -46,16 +49,23 @@ export function EditProductModal({
       stock: product.stock.toString(),
     },
     validationSchema: formValidationSchema,
-    onSubmit: (values) => {
-      updateProduct({
-        ...product,
-        name: values.name,
-        description: values.description,
-        price: Number(values.price),
-        category: values.category as ProductCategory,
-        stock: Number(values.stock),
-      });
-      onClose();
+    onSubmit: async (values) => {
+      setIsSubmitting(true);
+      try {
+        await updateProduct({
+          ...product,
+          name: values.name,
+          description: values.description,
+          price: Number(values.price),
+          category: values.category as ProductCategory,
+          stock: Number(values.stock),
+        });
+        onClose();
+      } catch (error) {
+        console.error('Failed to update product:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     },
   });
 
@@ -159,8 +169,15 @@ export function EditProductModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={formik.isSubmitting}>
-              Save Changes
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
           </DialogFooter>
         </form>

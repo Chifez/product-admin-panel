@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
-import { Bell, Search, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Bell, Search, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,8 +10,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function Header() {
   return (
@@ -27,10 +27,6 @@ export function Header() {
         <span className="text-xl font-semibold">ProductAdmin</span>
       </div>
       <div className="hidden md:flex md:flex-1 md:items-center md:justify-end md:gap-4">
-        <form className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input type="search" placeholder="Search..." className="w-64 rounded-full bg-muted pl-8" />
-        </form>
         <Button variant="ghost" size="icon" className="rounded-full">
           <Bell className="h-5 w-5" />
           <span className="sr-only">Notifications</span>
@@ -69,5 +65,5 @@ export function Header() {
         </Button>
       </div>
     </header>
-  )
+  );
 }

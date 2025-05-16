@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useProductStore } from '@/store/product-store';
 import type { Product, ProductCategory } from '@/types/product';
 import { Button } from '@/components/ui/button';
@@ -30,35 +30,66 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Edit, Search, Trash2 } from 'lucide-react';
+import { Edit, Search, Trash2, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { ProductTableSkeleton } from './table-loader';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+import { toast } from 'sonner';
+import { getCategoryBadgeColor } from '@/lib/helpers';
+import ProductDetailsModal from './product-details-modal';
+import DeleteConfirmationModal from './delete-confirmation-modal';
 
 interface ProductTableProps {
   onEditProduct: (product: Product) => void;
 }
 
 export function ProductTable({ onEditProduct }: ProductTableProps) {
-  const { products, fetchProducts, deleteProduct, categories } =
+  const { products, deleteProduct, categories, initializeProducts, isLoading } =
     useProductStore();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    initializeProducts();
+  }, []);
 
-  // Filter products based on search query and category
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = useMemo(() => {
+    let filtered = products?.filter((product) => {
+      const matchesSearch =
+        product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        selectedCategory === 'all' || product.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+
+    // Sort the filtered products by array index
+    if (filtered) {
+      filtered = [...filtered].sort((a, b) => {
+        const indexA = products.findIndex((p) => p.id === a.id);
+        const indexB = products.findIndex((p) => p.id === b.id);
+        return sortOrder === 'asc' ? indexA - indexB : indexB - indexA;
+      });
+    }
+
+    return filtered;
+  }, [products, searchQuery, selectedCategory, sortOrder]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -72,18 +103,15 @@ export function ProductTable({ onEditProduct }: ProductTableProps) {
     setCurrentPage(page);
   };
 
-  const getCategoryBadgeColor = (category: ProductCategory) => {
-    switch (category) {
-      case 'Electronics':
-        return 'bg-blue-100 text-blue-800';
-      case 'Clothing':
-        return 'bg-purple-100 text-purple-800';
-      case 'Home':
-        return 'bg-green-100 text-green-800';
-      case 'Books':
-        return 'bg-amber-100 text-amber-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+    try {
+      await deleteProduct(productToDelete);
+      toast.success('deleted successfully');
+    } catch (error) {
+      toast.error(`An error occurred ${error}`);
+    } finally {
+      setProductToDelete(null);
     }
   };
 
@@ -100,88 +128,111 @@ export function ProductTable({ onEditProduct }: ProductTableProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 gap-1"
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          >
+            <ArrowUpDown className="h-4 w-4" />
+            {sortOrder === 'asc' ? 'Oldest First' : 'Newest First'}
+          </Button>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-
-      <Card className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="hidden md:table-cell">
-                Description
-              </TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="hidden sm:table-cell">Category</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedProducts.length > 0 ? (
-              paginatedProducts.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell className="hidden max-w-xs truncate md:table-cell">
-                    {product.description}
-                  </TableCell>
-                  <TableCell>${product.price.toFixed(2)}</TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'font-normal',
-                        getCategoryBadgeColor(product.category)
-                      )}
-                    >
-                      {product.category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEditProduct(product)}
+      {isLoading ? (
+        <ProductTableSkeleton />
+      ) : (
+        <Card className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Description
+                </TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead className="hidden sm:table-cell">Category</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedProducts.length > 0 ? (
+                paginatedProducts.map((product) => (
+                  <TableRow
+                    key={product.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setSelectedProduct(product)}
+                  >
+                    <TableCell className="font-medium">
+                      {product.name}
+                    </TableCell>
+                    <TableCell className="hidden max-w-xs truncate md:table-cell">
+                      {product.description}
+                    </TableCell>
+                    <TableCell>${product.price.toFixed(2)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'font-normal',
+                          getCategoryBadgeColor(product.category)
+                        )}
                       >
-                        <Edit className="h-4 w-4" />
-                        <span className="sr-only">Edit</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteProduct(product.id)}
+                        {product.category}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{product.stock}</TableCell>
+                    <TableCell className="text-right">
+                      <div
+                        className="flex justify-end gap-2"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                    </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEditProduct(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setProductToDelete(product.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    No products found.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  No products found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
       {totalPages > 1 && (
         <Pagination>
@@ -213,6 +264,16 @@ export function ProductTable({ onEditProduct }: ProductTableProps) {
           </PaginationContent>
         </Pagination>
       )}
+      <DeleteConfirmationModal
+        productToDelete={productToDelete}
+        setProductToDelete={setProductToDelete}
+        handleDeleteConfirm={handleDeleteConfirm}
+      />
+      <ProductDetailsModal
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
     </div>
   );
 }
