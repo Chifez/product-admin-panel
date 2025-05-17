@@ -2,7 +2,8 @@ import { cn } from '@/lib/utils';
 import { Product } from '@/types/product';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { getCategoryBadgeColor } from '@/lib/helpers';
+// import { getCategoryBadgeColor } from '@/lib/helpers';
+import { CategoryBadge } from './category-badge';
 
 interface ProductDetailsModalProps {
   product: Product | null;
@@ -49,14 +50,17 @@ function ProductDetailsModal({
             </div>
             <div className="grid gap-2">
               <p className="font-semibold text-lg">Category</p>
-              <Badge
+              {/* <Badge
                 className={cn(
                   'w-fit text-base px-3 py-1',
                   getCategoryBadgeColor(product.category)
                 )}
               >
                 {product.category}
-              </Badge>
+              </Badge> */}
+              <div className="flex items-center gap-2">
+                {CategoryBadge(product.category)}
+              </div>
             </div>
           </div>
         </div>

@@ -45,9 +45,10 @@ import {
   AlertDialogTitle,
 } from './ui/alert-dialog';
 import { toast } from 'sonner';
-import { getCategoryBadgeColor } from '@/lib/helpers';
+// import { getCategoryBadgeColor } from '@/lib/helpers';
 import ProductDetailsModal from './product-details-modal';
 import DeleteConfirmationModal from './delete-confirmation-modal';
+import { CategoryBadge } from './category-badge';
 
 interface ProductTableProps {
   onEditProduct: (product: Product) => void;
@@ -186,15 +187,7 @@ export function ProductTable({ onEditProduct }: ProductTableProps) {
                     </TableCell>
                     <TableCell>${product.price.toFixed(2)}</TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'font-normal',
-                          getCategoryBadgeColor(product.category)
-                        )}
-                      >
-                        {product.category}
-                      </Badge>
+                      {CategoryBadge(product.category)}
                     </TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell className="text-right">
