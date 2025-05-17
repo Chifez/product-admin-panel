@@ -80,7 +80,7 @@ export function Sidebar({
         />
         <div className="mt-auto border-t py-4">
           <NavItem
-            href="/settings"
+            href="#"
             icon={Settings}
             label="Settings"
             collapsed={collapsed}
