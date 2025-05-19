@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import NavItem from './nav-item';
+import Image from 'next/image';
 
 export function Sidebar({
   collapsed,
@@ -29,7 +30,16 @@ export function Sidebar({
   const SidebarContent = () => (
     <>
       <div className="flex items-center justify-between p-2">
-        {!collapsed && <span className="text-xl font-semibold">Admin</span>}
+        <div className="flex-1 flex items-center justify-center">
+          <Image
+            src="/brand.png"
+            alt="brand Logo"
+            width={70}
+            height={70}
+            priority
+          />
+          {/* {!collapsed && <span className="text- font-semibold">Admin</span>} */}
+        </div>
         {!isMobile && (
           <Button
             variant="ghost"

@@ -1,15 +1,19 @@
-"use client"
+'use client';
 
-import { Button } from "@/components/ui/button"
-import { PlusCircle } from "lucide-react"
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 interface DashboardHeaderProps {
-  heading: string
-  text?: string
-  onCreateClick?: () => void
+  heading: string;
+  text?: string;
+  onCreateClick?: () => void;
 }
 
-export function DashboardHeader({ heading, text, onCreateClick }: DashboardHeaderProps) {
+export function DashboardHeader({
+  heading,
+  text,
+  onCreateClick,
+}: DashboardHeaderProps) {
   return (
     <div className="flex items-center justify-between">
       <div className="space-y-1">
@@ -18,10 +22,10 @@ export function DashboardHeader({ heading, text, onCreateClick }: DashboardHeade
       </div>
       {onCreateClick && (
         <Button onClick={onCreateClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <PlusCircle className="md:mr-2 h-4 w-4" />
           Add Product
         </Button>
       )}
     </div>
-  )
+  );
 }
